@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Шахматный класс</title>
+<meta name="description" content="Учитесь играть в шахматы: уроки, задачи, игра против бота шести уровней и разбор ошибок.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="#play" aria-label="Шахматный класс — на главную">
+      <span class="brand-mark" aria-hidden="true">&#9822;&#xFE0E;</span>
+      <span class="brand-name">Шахматный класс</span>
+    </a>
+    <nav class="tabs" aria-label="Разделы">
+      <a href="#play" data-view="play">Игра с ботом</a>
+      <a href="#review" data-view="review">Разбор ошибок</a>
+      <a href="#learn" data-view="learn">Обучение</a>
+      <a href="#puzzles" data-view="puzzles">Задачи</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Игра с ботом -->
+  <section class="view" id="view-play" aria-label="Игра с ботом">
+    <div class="stage">
+      <div class="strip" id="play-top"></div>
+      <div class="board-host" id="play-board"></div>
+      <div class="strip" id="play-bottom"></div>
+    </div>
+    <aside class="panel">
+      <div class="block">
+        <h2 class="h">Новая партия</h2>
+        <div class="field">
+          <span class="label" id="levels-label">Уровень бота</span>
+          <div class="levels" id="levels" role="radiogroup" aria-labelledby="levels-label"></div>
+          <p class="note" id="level-desc"></p>
+        </div>
+        <div class="field">
+          <span class="label" id="side-label">Играть за</span>
+          <div class="seg" id="side" role="radiogroup" aria-labelledby="side-label">
+            <button type="button" data-side="w" role="radio">Белых</button>
+            <button type="button" data-side="r" role="radio">Случайно</button>
+            <button type="button" data-side="b" role="radio">Чёрных</button>
+          </div>
+        </div>
+        <button type="button" class="btn primary wide" id="new-game">Начать партию</button>
+      </div>
+      <div class="block sheet">
+        <div class="status" id="play-status" aria-live="polite"></div>
+        <div class="result" id="play-result" hidden>
+          <p class="result-text" id="play-result-text"></p>
+          <button type="button" class="btn primary" id="play-review">Разобрать партию</button>
+        </div>
+        <ol class="moves" id="play-moves"></ol>
+        <div class="actions">
+          <button type="button" class="btn" id="play-undo">Вернуть ход</button>
+          <button type="button" class="btn" id="play-hint">Подсказка</button>
+          <button type="button" class="btn" id="play-flip">Перевернуть</button>
+          <button type="button" class="btn danger" id="play-resign">Сдаться</button>
+        </div>
+        <button type="button" class="btn ghost wide" id="play-review-now">Разобрать текущую партию</button>
+      </div>
+      <p class="note" id="play-stats"></p>
+    </aside>
+  </section>
+
+  <!-- Разбор ошибок -->
+  <section class="view" id="view-review" aria-label="Разбор ошибок" hidden>
+    <div class="stage">
+      <div class="strip" id="review-caption"></div>
+      <div class="board-host" id="review-board"></div>
+      <div class="nav-row">
+        <button type="button" class="btn icon" id="rv-first" aria-label="В начало">&#x23EE;&#xFE0E;</button>
+        <button type="button" class="btn icon" id="rv-prev" aria-label="Предыдущий ход">&#x25C0;&#xFE0E;</button>
+        <button type="button" class="btn icon" id="rv-next" aria-label="Следующий ход">&#x25B6;&#xFE0E;</button>
+        <button type="button" class="btn icon" id="rv-last" aria-label="В конец">&#x23ED;&#xFE0E;</button>
+        <button type="button" class="btn" id="rv-err-prev">&larr; ошибка</button>
+        <button type="button" class="btn" id="rv-err-next">ошибка &rarr;</button>
+      </div>
+      <div class="graph" id="review-graph" aria-label="График оценки"></div>
+    </div>
+    <aside class="panel">
+      <div class="block" id="review-source">
+        <h2 class="h">Что разобрать</h2>
+        <button type="button" class="btn wide" id="rv-load-last">Последняя партия против бота</button>
+        <details class="pgn" id="rv-pgn-box">
+          <summary>Вставить свою партию (PGN или список ходов)</summary>
+          <label class="label" for="rv-pgn">Ходы партии</label>
+          <textarea id="rv-pgn" rows="5" spellcheck="false" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4 4. Nxe5 Qg5"></textarea>
+          <label class="label" for="rv-side">Мои ходы</label>
+          <select id="rv-side">
+            <option value="w">за белых</option>
+            <option value="b">за чёрных</option>
+            <option value="both">обе стороны</option>
+          </select>
+          <button type="button" class="btn wide" id="rv-load-pgn">Загрузить партию</button>
+        </details>
+        <div class="row">
+          <label class="label" for="rv-depth">Глубина разбора</label>
+          <select id="rv-depth">
+            <option value="3">Быстрый</option>
+            <option value="4" selected>Обычный</option>
+            <option value="5">Глубокий</option>
+          </select>
+        </div>
+        <p class="note error" id="rv-error" hidden></p>
+      </div>
+      <div class="block">
+        <div class="progress" id="rv-progress" hidden><div class="progress-bar" id="rv-progress-bar"></div><span id="rv-progress-text"></span></div>
+        <div class="summary" id="rv-summary"></div>
+        <div class="comment" id="rv-comment" aria-live="polite"></div>
+        <ol class="moves" id="rv-moves"></ol>
+        <button type="button" class="btn primary wide" id="rv-train" hidden></button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- Обучение -->
+  <section class="view" id="view-learn" aria-label="Обучение" hidden>
+    <div class="stage">
+      <div class="strip" id="learn-caption"></div>
+      <div class="board-host" id="learn-board"></div>
+    </div>
+    <aside class="panel">
+      <div class="block lesson">
+        <p class="eyebrow" id="learn-group"></p>
+        <h2 class="h" id="learn-title"></h2>
+        <div class="steps" id="learn-steps"></div>
+        <div class="lesson-text" id="learn-text"></div>
+        <div class="feedback" id="learn-feedback" aria-live="polite"></div>
+        <div class="actions">
+          <button type="button" class="btn" id="learn-prev">Назад</button>
+          <button type="button" class="btn" id="learn-reset">Заново</button>
+          <button type="button" class="btn primary" id="learn-next">Далее</button>
+        </div>
+      </div>
+      <div class="block">
+        <h3 class="h small">Программа</h3>
+        <div class="toc" id="learn-toc"></div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- Задачи -->
+  <section class="view" id="view-puzzles" aria-label="Задачи" hidden>
+    <div class="stage">
+      <div class="strip" id="pz-caption"></div>
+      <div class="board-host" id="pz-board"></div>
+    </div>
+    <aside class="panel">
+      <div class="block">
+        <p class="eyebrow" id="pz-cat"></p>
+        <h2 class="h" id="pz-title"></h2>
+        <p class="task-line" id="pz-task"></p>
+        <div class="feedback" id="pz-feedback" aria-live="polite"></div>
+        <div class="actions">
+          <button type="button" class="btn" id="pz-hint">Подсказка</button>
+          <button type="button" class="btn" id="pz-solution">Решение</button>
+          <button type="button" class="btn" id="pz-retry">Заново</button>
+          <button type="button" class="btn primary" id="pz-next">Следующая</button>
+        </div>
+      </div>
+      <div class="block">
+        <h3 class="h small">Все задачи <span class="count" id="pz-count"></span></h3>
+        <div class="toc" id="pz-toc"></div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<script src="js/chess.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/board.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/puzzles.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
