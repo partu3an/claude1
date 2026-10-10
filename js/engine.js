@@ -9,7 +9,7 @@
       if (this.local) return null;
       if (this.worker) return this.worker;
       try {
-        const w = new Worker('js/worker.js');
+        const w = new Worker(root.ENGINE_WORKER_URL || 'js/worker.js');
         w.onmessage = (e) => {
           const job = this.jobs.get(e.data.id);
           if (!job) return;
